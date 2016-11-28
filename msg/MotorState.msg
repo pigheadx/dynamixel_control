@@ -4,7 +4,7 @@
 std_msgs/Header header
 string motor_model
 int64 id
-int64 torque_enable
+bool torque_enable
 int64 max_position_limit
 int64 min_position_limit
 int64 ccw_angle_limit
@@ -19,4 +19,4 @@ int64 profile_acceleration
 int64 present_position
 int64 present_velocity
 int64 present_current
-int64 moving
+bool moving
