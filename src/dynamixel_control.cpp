@@ -30,7 +30,7 @@
 
 /* Author: Taehoon Lim (Darby) */
 
-#include "dynamixel_control.h"
+#include "dynamixel_control/dynamixel_control.h"
 
 using namespace dynamixel_control;
 
@@ -39,9 +39,8 @@ DynamixelControl::DynamixelControl()
      is_debug_(false),
      device_name_(""),
      baud_rate_(0),
-     motor_model_(""),
-     motor_id_(0),
-     protocol_version_(0.0)
+     protocol_version_(0.0),
+     motor_count_(0)
 {
   // Init parameter
   nh_priv_.param("is_debug", is_debug_, is_debug_);
@@ -90,19 +89,20 @@ DynamixelControl::DynamixelControl()
     ROS_ERROR("Failed to change the baudrate!");
   }
 
-  std::ostringstream oss;
+  char buf[20];
+  std::string motorParam;
   std::string paramTemp;
   int idTemp;
-  for(int i=0;i++;i<motor_count_)
+  for(int i=0;i<motor_count_;i++)
   {
-    oss.clear();
-    oss<<"motor_"<<i<<"_/";
-    nh_priv_.getParam(oss.str()+"motor_name_", paramTemp);
+    sprintf(buf,"motor_%d_/",i);
+    motorParam = buf;
+    nh_priv_.getParam((motorParam+"motor_name_"), paramTemp);
     motor_name_.push_back(paramTemp);
     motor_name_index_[paramTemp]=i;
-    nh_priv_.getParam(oss.str()+"motor_model_", paramTemp);
+    nh_priv_.getParam((motorParam+"motor_model_"), paramTemp);
     motor_model_.push_back(paramTemp);
-    nh_priv_.getParam(oss.str()+"motor_id_", idTemp);
+    nh_priv_.getParam((motorParam+"motor_id_"), idTemp);
     motor_id_.push_back(idTemp);
     ROS_INFO("motor[%d]:", i);
     ROS_INFO("motor_name: %s", motor_name_[i].c_str());
@@ -269,7 +269,7 @@ bool DynamixelControl::writeTorqueEnable(bool onoff)
 {
   if (onoff == true)
   {
-    for(int i=0;i++;i<motor_count_)
+    for(int i=0;i<motor_count_;i++)
     {
       dynamixel_[i]->item_ = dynamixel_[i]->ctrl_table_["torque_enable"];
       syncWriteDynamixels(i, dynamixel_[i]->item_->address, dynamixel_[i]->item_->data_length, true);
@@ -277,7 +277,7 @@ bool DynamixelControl::writeTorqueEnable(bool onoff)
   }
   else
   {
-    for(int i=0;i++;i<motor_count_)
+    for(int i=0;i<motor_count_;i++)
     {
       dynamixel_[i]->item_ = dynamixel_[i]->ctrl_table_["torque_enable"];
       syncWriteDynamixels(i, dynamixel_[i]->item_->address, dynamixel_[i]->item_->data_length, false);
@@ -302,7 +302,7 @@ bool DynamixelControl::writeTorqueEnable(bool onoff)
 
 bool DynamixelControl::writeProfile()
 {
-  for(int i=0;i++;i<motor_count_){
+  for(int i=0;i<motor_count_;i++){
     if (!strncmp(motor_model_[i].c_str(), "AX", 2) || !strncmp(motor_model_[i].c_str(), "RX", 2) || !strncmp(motor_model_[i].c_str(), "EX", 2))
     {
       dynamixel_[i]->item_ = dynamixel_[i]->ctrl_table_["moving_speed"];
@@ -372,6 +372,8 @@ bool DynamixelControl::writePosition(uint8_t motor, int64_t pos)
 
 bool DynamixelControl::readMotorState(uint8_t motor, std::string addr_name)
 {
+//  ROS_INFO("motor %u, addr %s", motor, addr_name.c_str());
+
   int64_t read_value;
 
   dynamixel_[motor]->item_ = dynamixel_[motor]->ctrl_table_[addr_name];
@@ -382,9 +384,9 @@ bool DynamixelControl::readMotorState(uint8_t motor, std::string addr_name)
   return true;
 }
 
-bool DynamixelWorkbenchPositionControl::getPublishedMsg(void)
+bool DynamixelControl::getPublishedMsg(void)
 {
-  for(int i=0;i++;i<motor_count_){
+  for(int i=0;i<motor_count_;i++){
     readMotorState(i, "torque_enable");
     readMotorState(i, "moving");
     readMotorState(i, "goal_position");
@@ -464,16 +466,16 @@ bool DynamixelControl::dynamixelControlLoop(void)
   {
     dynamixel_response[i].header.seq = state_msg_seq[i];
     state_msg_seq[i]++;
-    dynamixel_response[i].header.time = ros::Time::now();
+    dynamixel_response[i].header.stamp = ros::Time::now();
     dynamixel_response[i].header.frame_id = motor_name_[i];
 
     dynamixel_response[i].motor_model = dynamixel_[i]->model_name_;
     dynamixel_response[i].id = dynamixel_[i]->id_;
-    dynamixel_response[i].torque_enable = if(motor_state_[i]["torque_enable"] == 1);
+    dynamixel_response[i].torque_enable = (motor_state_[i]["torque_enable"] == 1);
     dynamixel_response[i].present_position = motor_state_[i]["present_position"];
     dynamixel_response[i].present_velocity = motor_state_[i]["present_velocity"];
     dynamixel_response[i].goal_position = motor_state_[i]["goal_position"];
-    dynamixel_response[i].moving = if(motor_state_[i]["moving"] == 1);
+    dynamixel_response[i].moving = (motor_state_[i]["moving"] == 1);
 
     if (!strncmp(motor_model_[i].c_str(), "AX", 2) || !strncmp(motor_model_[i].c_str(), "RX", 2) || !strncmp(motor_model_[i].c_str(), "MX", 2) || !strncmp(motor_model_[i].c_str(), "EX", 2))
     {
@@ -510,8 +512,8 @@ bool DynamixelControl::dynamixelControlLoop(void)
   }
 }
 
-bool DynamixelWorkbenchPositionControl::motorControlCallback(dynamixel_workbench_msgs::SetPosition::Request &req,
-                                                                    dynamixel_workbench_msgs::SetPosition::Response &res)
+bool DynamixelControl::motorControlCallback(dynamixel_control::MotorControl::Request &req,
+                                                                    dynamixel_control::MotorControl::Response &res)
 {
   int8_t motor = motor_name_index_[req.motor_name];
   int64_t pos = 0;
@@ -552,7 +554,7 @@ int main(int argc, char **argv)
 {
   // Init ROS node
   ros::init(argc, argv, "dynamixel_control");
-  DynamixelWorkbenchPositionControl dynamixel_pos_ctrl;
+  DynamixelControl dynamixel_pos_ctrl;
 
   ros::Rate loop_rate(125);
 

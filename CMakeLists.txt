@@ -6,6 +6,7 @@ project(dynamixel_control)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   diagnostic_updater
+  dynamixel_workbench_toolbox
   dynamixel_sdk
   message_generation
   std_msgs
@@ -130,15 +131,18 @@ include_directories(
 
 ## Declare a C++ executable
 # add_executable(dynamixel_control_node src/dynamixel_control_node.cpp)
+add_executable(dynamixel_control src/dynamixel_control.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(dynamixel_control_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(dynamixel_control ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(dynamixel_control_node
 #   ${catkin_LIBRARIES}
 # )
+target_link_libraries(dynamixel_control ${catkin_LIBRARIES})
 
 #############
 ## Install ##
@@ -160,6 +164,11 @@ include_directories(
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
+install(TARGETS dynamixel_control
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/
@@ -167,6 +176,13 @@ include_directories(
 #   FILES_MATCHING PATTERN "*.h"
 #   PATTERN ".svn" EXCLUDE
 # )
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
+
+install(DIRECTORY launch/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES

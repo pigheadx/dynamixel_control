@@ -47,8 +47,8 @@
 //#define PAN_MOTOR      0
 //#define TILT_MOTOR     1
 
-//#define VELOCITY      100
-//#define ACCELERATION  10
+#define VELOCITY      100
+#define ACCELERATION  10
 
 namespace dynamixel_control
 {
@@ -80,7 +80,7 @@ class DynamixelControl
   std::vector<std::string> motor_model_;
   std::vector<int> motor_id_;
 
-  std::vector<std::map<std::string, int64_t>> motor_state_;
+  std::map<uint8_t, std::map<std::string, int64_t> > motor_state_;
 
   std::vector<uint32_t > state_msg_seq;
 
@@ -106,8 +106,8 @@ class DynamixelControl
   int64_t convertRadian2Value(uint8_t motor, double radian);
 
   bool getPublishedMsg(void);
-  bool motorControlCallback(dynamixel_workbench_msgs::SetPosition::Request &req,
-                                   dynamixel_workbench_msgs::SetPosition::Response &res);
+  bool motorControlCallback(dynamixel_control::MotorControl::Request &req,
+                                   dynamixel_control::MotorControl::Response &res);
 };
 }
 
