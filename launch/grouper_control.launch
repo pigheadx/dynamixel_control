@@ -4,7 +4,7 @@
       device_name_: "/dev/ttyUSB0"
       baud_rate_: 57600
       protocol_version_: 1.0
-      motor_count_: 2
+      motor_count_: 3
       motor_0_:
         motor_name_: "cam_pan"
         motor_model_: "RX_10"
@@ -13,6 +13,10 @@
         motor_name_: "cam_tilt"
         motor_model_: "RX_10"
         motor_id_: 3
+      motor_2_:
+        motor_name_: "radar_tilt"
+        motor_model_: "MX_106"
+        motor_id_: 1
    </rosparam>
   </node>
 </launch>
