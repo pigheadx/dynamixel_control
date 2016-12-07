@@ -36,12 +36,15 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+
 #include <ros/ros.h>
+
 #include <dynamixel_workbench_toolbox/dynamixel_tool.h>
 #include <dynamixel_control/MotorState.h>
 #include <dynamixel_control/MotorControl.h>
-
 #include <dynamixel_sdk/dynamixel_sdk.h>
+
+#include <diagnostic_updater/diagnostic_updater.h>
 
 //#define PAN_TILT_MOTOR 0
 //#define PAN_MOTOR      0
@@ -68,6 +71,8 @@ class DynamixelControl
   ros::Publisher dynamixel_state_pub_;
   // ROS Service Server
   ros::ServiceServer dynamixel_control_server;
+  // ROS Diagnostic Updater
+  diagnostic_updater::Updater diagnostic_;
   // Parameters
   std::vector<dynamixel_tool::DynamixelTool *> dynamixel_;
 
@@ -75,6 +80,7 @@ class DynamixelControl
   int baud_rate_;
   float protocol_version_;
   int motor_count_;
+
   std::map<std::string, int> motor_name_index_;
   std::vector<std::string> motor_name_;
   std::vector<std::string> motor_model_;
@@ -88,6 +94,7 @@ class DynamixelControl
   DynamixelControl();
   ~DynamixelControl();
   bool dynamixelControlLoop(void);
+  void diagnostics(diagnostic_updater::DiagnosticStatusWrapper& status);
 
  private:
   bool initDynamixelControl(void);

@@ -128,11 +128,37 @@ DynamixelControl::DynamixelControl()
 //  initMotor(motor_model_, motor_id_, protocol_version_);
   writeTorqueEnable(true);
   writeProfile();
+
+  diagnostic_.add("DynamixelStatus", this, &DynamixelControl::diagnostics);
+  std::string hardwareID;
+  for(int i=0;i<motor_count_;i++){
+    hardwareID=hardwareID+motor_name_[i].c_str();
+    hardwareID=hardwareID+",";
+  }
+  diagnostic_.setHardwareID(hardwareID);
 }
 
 DynamixelControl::~DynamixelControl()
 {
   ROS_ASSERT(shutdownDynamixelControl());
+}
+
+void DynamixelControl::diagnostics(diagnostic_updater::DiagnosticStatusWrapper& status)
+{
+  uint8_t motorLED = 0;
+  for(int i=0;i<motor_count_;i++)
+  {
+    motorLED = motorLED|motor_state_[i]["alarm_led"];
+  }
+  if (motorLED == 0)
+    status.summary(0, "ok");
+  else
+    status.summary(2, "error");
+  for(int i=0;i<motor_count_;i++)
+  {
+    status.add(motor_name_[i]+"_led", motor_state_[i]["alarm_led"]);
+//    status.add(motor_name_[i]+"_vol", motor_state_[i]["present_voltage"]);
+  }
 }
 
 bool DynamixelControl::initDynamixelControl(void)
@@ -387,6 +413,8 @@ bool DynamixelControl::readMotorState(uint8_t motor, std::string addr_name)
 bool DynamixelControl::getPublishedMsg(void)
 {
   for(int i=0;i<motor_count_;i++){
+    readMotorState(i, "alarm_led");
+//    readMotorState(i, "present_voltage");
     readMotorState(i, "torque_enable");
     readMotorState(i, "moving");
     readMotorState(i, "goal_position");
@@ -459,6 +487,8 @@ int64_t DynamixelControl::convertRadian2Value(uint8_t motor, double radian)
 bool DynamixelControl::dynamixelControlLoop(void)
 {
   getPublishedMsg();
+
+  diagnostic_.update();
 
   dynamixel_control::MotorState dynamixel_response[motor_count_];
 
