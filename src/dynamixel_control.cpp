@@ -547,36 +547,46 @@ bool DynamixelControl::motorControlCallback(dynamixel_control::MotorControl::Req
 {
   int8_t motor = motor_name_index_[req.motor_name];
   int64_t pos = 0;
-
-  if (req.control_type == "position") {
-    if (req.unit == "rad")
-    {
-      pos = convertRadian2Value(motor, req.value);
-    }
-    else if (req.unit == "raw")
-    {
-      pos = req.value;
-    }
-    else
-    {
-      pos = req.value;
-    }
-
-    writePosition(motor, pos);
-
-    res.value = pos;
-  }
-  else if (req.control_type == "velocity") 
+  if (motor_name_[motor]!=req.motor_name)
   {
-    ROS_ERROR("Velocity not supported yet.");
+    ROS_ERROR("Illegal motor name.");
+    return false;
   }
-  else if (req.control_type == "torque")
+  else
   {
-    ROS_ERROR("Torque not supported yet.");
-  }
-  else 
-  {
-    ROS_ERROR("Illegal control type.");
+    if (req.control_type == "position") {
+      if (req.unit == "rad")
+      {
+        pos = convertRadian2Value(motor, req.value);
+      }
+      else if (req.unit == "raw")
+      {
+        pos = req.value;
+      }
+      else
+      {
+        pos = req.value;
+      }
+
+      writePosition(motor, pos);
+      res.value = pos;
+      return true;
+    }
+      else if (req.control_type == "velocity") 
+    {
+      ROS_ERROR("Velocity not supported yet.");
+      return false;
+    }
+    else if (req.control_type == "torque")
+    {
+      ROS_ERROR("Torque not supported yet.");
+      return false;
+    }
+    else 
+    {
+      ROS_ERROR("Illegal control type.");
+      return false;
+    }
   }
 }
 
